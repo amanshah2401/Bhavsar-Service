@@ -26,5 +26,15 @@ public class BhavsarController {
                 .findFirst()
                 .orElse(null);
     }
+    @DeleteMapping("/delete/{userId}")
+    public String deleteUser(@PathVariable int userId) {
+        UserDetails user = getUserById(userId);
+        if (user != null) {
+            userList.remove(user);
+            return "User deleted successfully";
+        } else {
+            return "User not found";
+        }
+    }
 
 }
