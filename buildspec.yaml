@@ -22,7 +22,7 @@ phases:
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $EKS_CLUSTER_NAME
       - kubectl apply -f k8s/deployment.yaml
       - kubectl apply -f k8s/service.yaml
-      - kubectl rollout status deployment/Bhavsar-Service-deployment
+      - kubectl rollout status deployment/bhavsar-service-deployment
 artifacts:
   files:
     - imagedefinitions.json
