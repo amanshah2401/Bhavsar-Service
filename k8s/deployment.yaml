@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: Bhavsar-Service-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: Bhavsar-Service
+  template:
+    metadata:
+      labels:
+        app: Bhavsar-Service
+    spec:
+      containers:
+        - name: Bhavsar-Service
+          image: 122814843741.dkr.ecr.eu-north-1.amazonaws.com/bhavsar-repository:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 5
