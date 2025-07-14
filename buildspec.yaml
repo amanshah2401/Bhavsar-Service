@@ -2,43 +2,32 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
+      - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
   build:
     commands:
-      - echo Build started on `date`
+      - echo "Build started on `date`"
       - mvn clean package -DskipTests
       - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
       - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
       - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI:latest
   post_build:
     commands:
-      - echo Build completed on `date`
+      - echo "Build completed on `date`"
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:latest
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $EKS_CLUSTER_NAME
-      - echo "=== DEBUGGING DEPLOYMENT ISSUES ==="
-      - echo "Repository URI: $REPOSITORY_URI:$IMAGE_TAG"
       - sed -i 's|YOUR_ECR_URI|'$REPOSITORY_URI'|g' k8s/deployment.yaml
-      - echo "=== Final deployment.yaml ==="
-      - cat k8s/deployment.yaml
-      - echo "=== Applying deployment ==="
       - kubectl apply -f k8s/deployment.yaml
       - kubectl apply -f k8s/service.yaml
-      - echo "=== Checking deployment status ==="
       - kubectl get deployments
       - kubectl get pods -l app=bhavsar-service
-      - echo "=== Describing pods ==="
       - kubectl describe pods -l app=bhavsar-service
-      - echo "=== Getting events ==="
-      - kubectl get events --sort-by=.metadata.creationTimestamp | tail -20
-      - echo "=== Checking pod logs ==="
-      - kubectl logs -l app=bhavsar-service --tail=50 || echo "No logs available yet"
-      - echo "=== Checking node resources ==="
-      - kubectl get nodes
-      - kubectl describe nodes | grep -A 5 "Allocated resources"
-      - echo "=== Rollout status with timeout ==="
       - kubectl rollout status deployment/bhavsar-service-deployment --timeout=300s
+artifacts:
+  files:
+    - imagedefinitions.json
+    - k8s/*
