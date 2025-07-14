@@ -20,10 +20,25 @@ phases:
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:latest
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $EKS_CLUSTER_NAME
+      - echo "=== DEBUGGING DEPLOYMENT ISSUES ==="
+      - echo "Repository URI: $REPOSITORY_URI:$IMAGE_TAG"
+      - sed -i 's|YOUR_ECR_URI|'$REPOSITORY_URI'|g' k8s/deployment.yaml
+      - echo "=== Final deployment.yaml ==="
+      - cat k8s/deployment.yaml
+      - echo "=== Applying deployment ==="
       - kubectl apply -f k8s/deployment.yaml
       - kubectl apply -f k8s/service.yaml
-      - kubectl rollout status deployment/bhavsar-service-deployment
-artifacts:
-  files:
-    - imagedefinitions.json
-    - k8s/*
+      - echo "=== Checking deployment status ==="
+      - kubectl get deployments
+      - kubectl get pods -l app=bhavsar-service
+      - echo "=== Describing pods ==="
+      - kubectl describe pods -l app=bhavsar-service
+      - echo "=== Getting events ==="
+      - kubectl get events --sort-by=.metadata.creationTimestamp | tail -20
+      - echo "=== Checking pod logs ==="
+      - kubectl logs -l app=bhavsar-service --tail=50 || echo "No logs available yet"
+      - echo "=== Checking node resources ==="
+      - kubectl get nodes
+      - kubectl describe nodes | grep -A 5 "Allocated resources"
+      - echo "=== Rollout status with timeout ==="
+      - kubectl rollout status deployment/bhavsar-service-deployment --timeout=300s

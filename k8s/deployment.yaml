@@ -3,8 +3,7 @@ kind: Deployment
 metadata:
   name: bhavsar-service-deployment
 spec:
-  replicas: 2
-  progressDeadlineSeconds: 1200
+  replicas: 1  # Start with 1 replica
   selector:
     matchLabels:
       app: bhavsar-service
@@ -20,20 +19,9 @@ spec:
             - containerPort: 8080
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "128Mi"
+              cpu: "100m"
             limits:
-              memory: "1024Mi"
-              cpu: "1000m"
-          livenessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8080
-            initialDelaySeconds: 20
-            periodSeconds: 5
+              memory: "256Mi"
+              cpu: "200m"
+          # Remove health checks temporarily
